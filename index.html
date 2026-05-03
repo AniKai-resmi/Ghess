@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ghess.co</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <style>
 /* ──────────────────────────── BOARD THEMES ──────────────────────── */
 :root {
@@ -568,6 +571,79 @@ body{
 
 .tr-back-btn{padding:8px 16px;background:var(--sf2);border:1px solid var(--br);color:var(--mu);border-radius:8px;cursor:pointer;font-family:'Syne',sans-serif;font-size:.82rem;font-weight:600;transition:all .15s;align-self:flex-start;}
 .tr-back-btn:hover{border-color:var(--acc);color:var(--acc);}
+
+/* ══ MATCH HISTORY ══ */
+.match-history-sec{width:100%;max-width:520px;background:var(--sf);border:1px solid var(--br);border-radius:16px;padding:20px 22px;margin-bottom:20px;}
+.mh-header{display:flex;justify-content:space-between;align-items:center;font-size:.9rem;font-weight:700;margin-bottom:14px;}
+.mh-clear-btn{font-size:.72rem;color:var(--mu);font-family:'DM Mono',monospace;background:none;border:1px solid var(--br);border-radius:6px;padding:3px 10px;cursor:pointer;transition:all .15s;}
+.mh-clear-btn:hover{border-color:var(--dng);color:var(--dng);}
+.mh-empty{font-size:.82rem;color:var(--mu);font-family:'DM Mono',monospace;text-align:center;padding:16px 0;}
+.mh-item{display:flex;align-items:center;gap:14px;padding:10px 12px;border-radius:10px;background:var(--sf2);border:1px solid var(--br);margin-bottom:8px;animation:mhFade .4s ease both;}
+@keyframes mhFade{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:none;}}
+.mh-result{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;flex-shrink:0;}
+.mh-result.win{background:rgba(0,229,160,.15);color:var(--acc);border:1.5px solid rgba(0,229,160,.4);}
+.mh-result.loss{background:rgba(255,68,85,.12);color:var(--dng);border:1.5px solid rgba(255,68,85,.3);}
+.mh-result.draw{background:rgba(240,192,64,.1);color:#f0c040;border:1.5px solid rgba(240,192,64,.3);}
+.mh-info{flex:1;}
+.mh-vs{font-size:.88rem;font-weight:700;}
+.mh-meta{font-size:.7rem;color:var(--mu);font-family:'DM Mono',monospace;margin-top:2px;}
+.mh-elo{font-size:.78rem;font-weight:700;font-family:'DM Mono',monospace;text-align:right;}
+.mh-elo.pos{color:var(--acc);}
+.mh-elo.neg{color:var(--dng);}
+.mh-elo.zero{color:var(--mu);}
+.mh-date{font-size:.68rem;color:var(--mu);font-family:'DM Mono',monospace;text-align:right;}
+
+/* ══ ONLINE ══ */
+#sc-online{flex-direction:column;}
+.online-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:40px;}
+.online-card{background:var(--sf);border:1px solid var(--br);border-radius:18px;padding:36px 40px;width:100%;max-width:440px;text-align:center;}
+.online-card h2{font-size:1.5rem;font-weight:800;margin-bottom:8px;}
+.online-card h2 em{color:var(--acc);font-style:normal;}
+.online-card p{color:var(--mu);font-size:.86rem;margin-bottom:24px;line-height:1.6;}
+.room-code-display{
+  font-size:2.8rem;font-weight:800;letter-spacing:.3em;
+  color:var(--acc);font-family:'DM Mono',monospace;
+  background:var(--sf2);border:2px dashed rgba(0,229,160,.4);
+  border-radius:12px;padding:16px;margin:16px 0;
+  cursor:pointer;transition:all .2s;
+}
+.room-code-display:hover{background:rgba(0,229,160,.08);}
+.room-code-hint{font-size:.75rem;color:var(--mu);font-family:'DM Mono',monospace;margin-bottom:20px;}
+.online-input{
+  width:100%;padding:14px;text-align:center;letter-spacing:.2em;
+  background:var(--sf2);border:1px solid var(--br);
+  color:var(--tx);font-family:'DM Mono',monospace;font-size:1.4rem;
+  font-weight:800;border-radius:10px;outline:none;
+  text-transform:uppercase;transition:border .18s;margin-bottom:14px;
+}
+.online-input:focus{border-color:var(--acc);}
+.online-divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--mu);font-size:.78rem;font-family:'DM Mono',monospace;}
+.online-divider::before,.online-divider::after{content:'';flex:1;height:1px;background:var(--br);}
+.online-status{font-size:.85rem;font-family:'DM Mono',monospace;min-height:24px;margin-top:8px;}
+.online-status.ok{color:var(--acc);}
+.online-status.err{color:var(--dng);}
+.online-status.wait{color:#f0c040;}
+.waiting-anim{display:inline-block;}
+.waiting-anim span{animation:wdot 1.4s infinite;display:inline-block;}
+.waiting-anim span:nth-child(2){animation-delay:.2s;}
+.waiting-anim span:nth-child(3){animation-delay:.4s;}
+@keyframes wdot{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-5px);}}
+.firebase-warning{font-size:.72rem;color:var(--mu);font-family:'DM Mono',monospace;margin-top:16px;padding:10px;background:var(--sf2);border-radius:8px;line-height:1.6;text-align:left;}
+.firebase-warning a{color:var(--acc);}
+
+/* ══ STREAK ══ */
+.streak-sec{width:100%;max-width:520px;background:var(--sf);border:1px solid var(--br);border-radius:16px;padding:22px 24px;}
+.streak-header{display:flex;justify-content:space-between;align-items:center;font-size:.9rem;font-weight:700;margin-bottom:16px;}
+.streak-sub{font-size:.72rem;color:var(--mu);font-family:'DM Mono',monospace;}
+.streak-days{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-bottom:14px;}
+.streak-day{display:flex;flex-direction:column;align-items:center;gap:4px;width:48px;}
+.streak-day .sdc{width:36px;height:36px;border-radius:50%;border:2px solid var(--br);display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all .3s;background:var(--sf2);}
+.streak-day .sdc.done{background:var(--acc);border-color:var(--acc);box-shadow:0 0 12px rgba(0,229,160,.4);}
+.streak-day .sdc.today{border-color:var(--acc);box-shadow:0 0 0 3px rgba(0,229,160,.2);}
+.streak-day .sdc.missed{background:rgba(255,68,85,.1);border-color:rgba(255,68,85,.25);}
+.streak-day .sdl{font-size:.58rem;color:var(--mu);font-family:'DM Mono',monospace;text-align:center;}
+.streak-footer{display:flex;justify-content:space-between;font-size:.8rem;font-family:'DM Mono',monospace;color:var(--tx);}
+.streak-footer b{color:var(--acc);}
 </style>
 <body data-board="classic">
 
@@ -679,11 +755,11 @@ body{
         <p>Açılışlar, taktikler, bitiş oyunları — ustadan öğren!</p>
         <div class="badge badge-g">4 Mod</div>
       </div>
-      <div class="pcard" style="opacity:.4;cursor:default;">
+      <div class="pcard" onclick="openOnline()">
         <div class="pcard-ic">🌐</div>
         <h3>Online</h3>
-        <p>Gerçek rakiplerle oyna — yakında</p>
-        <div class="badge badge-m">Yakında</div>
+        <p>Arkadaşınla farklı cihazlardan oyna — oda kodu paylaş!</p>
+        <div class="badge badge-g">Canlı</div>
       </div>
     </div>
     <div class="elo-sec">
@@ -697,12 +773,38 @@ body{
       <div class="sb"><div class="sb-val" id="st-d">0</div><div class="sb-lbl">Beraberlik</div></div>
       <div class="sb"><div class="sb-val" id="st-e">0</div><div class="sb-lbl">😊 Kolay</div></div>
       <div class="sb"><div class="sb-val" id="st-m">0</div><div class="sb-lbl">🎯 Orta</div></div>
+      <div class="sb"><div class="sb-val" id="st-z">0</div><div class="sb-lbl">💀 Zor</div></div>
       <div class="sb"><div class="sb-val" id="st-h">0</div><div class="sb-lbl">👑 Magnus</div></div>
     </div>
+
+    <!-- Günlük Seri -->
+    <div class="streak-sec" id="streak-sec">
+      <div class="streak-header">
+        <span>🔥 Günlük Seri</span>
+        <span class="streak-sub" id="streak-date-lbl"></span>
+      </div>
+      <div class="streak-days" id="streak-days"></div>
+      <div class="streak-footer">
+        <span id="streak-count-lbl">Mevcut seri: <b>0</b> gün</span>
+        <span id="streak-best-lbl" style="color:var(--mu)">En iyi: <b>0</b> gün</span>
+      </div>
+    </div>
+
+    <!-- Son Maçlar -->
+    <div class="match-history-sec" id="match-history-sec">
+      <div class="mh-header">
+        <span>🕹️ Son Maçlar</span>
+        <button class="mh-clear-btn" onclick="clearMatchHistory()">Temizle</button>
+      </div>
+      <div id="match-history-list">
+        <div class="mh-empty">Henüz maç oynanmadı.</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
-<!-- ══════════════════════════ PROFILE ════════════════════════════════ -->
+<!-- ════════════════════════════════ -->
 <div id="sc-profile" class="screen">
   <div class="topbar">
     <div class="t-logo">G<span>h</span>ess.co — Profil</div>
@@ -980,7 +1082,7 @@ function doRegister(){
   if(users[u]){err.style.display='block';err.textContent='Bu kullanıcı adı zaten alınmış.';return;}
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){err.style.display='block';err.textContent='Geçerli e-posta girin.';return;}
   err.style.display='none';
-  users[u]={pass:btoa(p),email:e,displayName:u,elo:0,wins:0,losses:0,draws:0,ew:0,mw:0,hw:0};
+  users[u]={pass:btoa(p),email:e,displayName:u,elo:0,wins:0,losses:0,draws:0,ew:0,mw:0,zw:0,mgw:0};
   saveUsers();
   cu={name:u,...users[u]};
   saveCU(); enterHome();
@@ -1001,14 +1103,14 @@ function doGoogle(){
   if(!email||!email.includes('@')){err.style.display='block';return;}
   err.style.display='none'; closeGpop();
   let uname = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g,'').substring(0,20)||'Oyuncu';
-  if(!users[uname]) users[uname]={email,displayName:uname,elo:0,wins:0,losses:0,draws:0,ew:0,mw:0,hw:0,google:true};
+  if(!users[uname]) users[uname]={email,displayName:uname,elo:0,wins:0,losses:0,draws:0,ew:0,mw:0,zw:0,mgw:0,google:true};
   saveUsers();
   cu={name:uname,...users[uname]};
   saveCU(); enterHome();
 }
 
 function guestLogin(){
-  cu={name:'Misafir',displayName:'Misafir',elo:0,wins:0,losses:0,draws:0,ew:0,mw:0,hw:0,guest:true};
+  cu={name:'Misafir',displayName:'Misafir',elo:0,wins:0,losses:0,draws:0,ew:0,mw:0,zw:0,mgw:0,guest:true};
   enterHome();
 }
 
@@ -1020,7 +1122,7 @@ function doLogout(){
 if(cu) setTimeout(enterHome,0);
 
 function renderAllAvatars(){
-  // Topbar avatar
+  if(!cu) return;
   let av=document.getElementById('h-av');
   let nm=(cu.displayName||cu.name);
   if(cu.photo){
@@ -1045,21 +1147,134 @@ function renderAllAvatars(){
   }
 }
 
+function animateCount(elId, target, duration=800){
+  let el=document.getElementById(elId);
+  if(!el)return;
+  let start=0, step=Math.ceil(target/30)||1;
+  let interval=Math.floor(duration/(target||1));
+  if(interval<16)interval=16;
+  if(target===0){el.textContent='0';return;}
+  let t=setInterval(()=>{
+    start=Math.min(start+step,target);
+    el.textContent=start;
+    if(start>=target)clearInterval(t);
+  },interval);
+}
+
+/* ══ MATCH HISTORY ══ */
+function saveMatchResult(result, opponent, eloChange, moves){
+  let key='ghess_matches_'+(cu&&cu.name?cu.name:'guest');
+  let history=JSON.parse(localStorage.getItem(key)||'[]');
+  let now=new Date();
+  history.unshift({
+    result,        // 'win' | 'loss' | 'draw'
+    opponent,      // bot name string
+    eloChange,     // number
+    moves,         // move count
+    date: now.toLocaleDateString('tr-TR',{day:'numeric',month:'short'}),
+    time: now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}),
+    ts: Date.now()
+  });
+  if(history.length>20) history=history.slice(0,20); // max 20 maç
+  localStorage.setItem(key, JSON.stringify(history));
+}
+
+function renderMatchHistory(){
+  if(!cu) return;
+  let key='ghess_matches_'+(cu.name?cu.name:'guest');
+  let history=JSON.parse(localStorage.getItem(key)||'[]');
+  let list=document.getElementById('match-history-list');
+  if(!list) return;
+  if(!history.length){
+    list.innerHTML='<div class="mh-empty">Henüz maç oynanmadı.</div>';
+    return;
+  }
+  list.innerHTML='';
+  history.forEach((m,i)=>{
+    let item=document.createElement('div');
+    item.className='mh-item';
+    item.style.animationDelay=(i*60)+'ms';
+    let rLabel=m.result==='win'?'G':m.result==='loss'?'M':'B';
+    let eloStr=m.eloChange>0?'+'+m.eloChange:m.eloChange===0?'—':m.eloChange;
+    let eloCls=m.eloChange>0?'pos':m.eloChange<0?'neg':'zero';
+    item.innerHTML=`
+      <div class="mh-result ${m.result}">${rLabel}</div>
+      <div class="mh-info">
+        <div class="mh-vs">${m.opponent}</div>
+        <div class="mh-meta">${m.moves} hamle</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="mh-elo ${eloCls}">${eloStr} ELO</div>
+        <div class="mh-date">${m.date} ${m.time}</div>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function clearMatchHistory(){
+  if(!cu) return;
+  let key='ghess_matches_'+(cu.name?cu.name:'guest');
+  localStorage.removeItem(key);
+  renderMatchHistory();
+}
+
+function renderStreak(){
+  const DAY_NAMES=['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
+  let today=new Date();
+  let streak=parseInt(localStorage.getItem('ghess_pz_streak')||'0');
+  let bestStreak=parseInt(localStorage.getItem('ghess_pz_best')||'0');
+  if(streak>bestStreak){ bestStreak=streak; localStorage.setItem('ghess_pz_best',bestStreak); }
+  let lastDate=localStorage.getItem('ghess_pz_date')||'';
+  let daysEl=document.getElementById('streak-days');
+  if(!daysEl) return;
+  daysEl.innerHTML='';
+  for(let i=6;i>=0;i--){
+    let d=new Date(today); d.setDate(today.getDate()-i);
+    let ds=d.toDateString();
+    let isToday=(i===0);
+    let isDone=(lastDate===ds);
+    let isPast=(!isToday&&streak>0&&i<=streak);
+    let wrap=document.createElement('div'); wrap.className='streak-day';
+    let circ=document.createElement('div');
+    circ.className='sdc'+(isDone||isPast?' done':isToday?' today':' missed');
+    circ.textContent=isDone||isPast?'✓':isToday?'★':'·';
+    let lbl=document.createElement('div');
+    lbl.className='sdl';
+    lbl.textContent=DAY_NAMES[d.getDay()]+(isToday?' (bugün)':'');
+    wrap.appendChild(circ); wrap.appendChild(lbl);
+    wrap.style.opacity='0'; wrap.style.transform='translateY(10px)';
+    wrap.style.transition=`opacity .3s ${(6-i)*60}ms, transform .3s ${(6-i)*60}ms`;
+    daysEl.appendChild(wrap);
+    setTimeout(()=>{ wrap.style.opacity='1'; wrap.style.transform='none'; },20);
+  }
+  let sc=document.getElementById('streak-count-lbl');
+  let sb=document.getElementById('streak-best-lbl');
+  let sd=document.getElementById('streak-date-lbl');
+  if(sc) sc.innerHTML=`Mevcut seri: <b>${streak}</b> gün`;
+  if(sb) sb.innerHTML=`En iyi: <b>${bestStreak}</b> gün`;
+  if(sd) sd.textContent=today.toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
+}
+
 function enterHome(){
-  let nm=cu.displayName||cu.name;
+  if(!cu) return;
+  let nm=cu.displayName||cu.name||'Oyuncu';
   renderAllAvatars();
   document.getElementById('h-nm').textContent=nm;
+  animateCount('h-elo-big', cu.elo||0);
   document.getElementById('h-elo').textContent='ELO: '+(cu.elo||0);
-  document.getElementById('h-elo-big').textContent=cu.elo||0;
   let pct=Math.min(100,((cu.elo||0)/2000)*100);
-  document.getElementById('elo-bar').style.width=pct+'%';
-  document.getElementById('st-w').textContent=cu.wins||0;
-  document.getElementById('st-l').textContent=cu.losses||0;
-  document.getElementById('st-d').textContent=cu.draws||0;
-  document.getElementById('st-e').textContent=cu.ew||0;
-  document.getElementById('st-m').textContent=cu.mw||0;
-  document.getElementById('st-h').textContent=cu.hw||0;
+  setTimeout(()=>{ document.getElementById('elo-bar').style.width=pct+'%'; },100);
+  animateCount('st-w', cu.wins||0);
+  animateCount('st-l', cu.losses||0);
+  animateCount('st-d', cu.draws||0);
+  animateCount('st-e', cu.ew||0);
+  animateCount('st-m', cu.mw||0);
+  animateCount('st-z', cu.zw||0);
+  animateCount('st-h', cu.mgw||0);
   buildSwatches();
+  renderStreak();
+  renderMatchHistory();
   showSc('sc-home');
 }
 
@@ -1290,7 +1505,7 @@ function startGame(){
   closeSetup();
   gMode=sOpts.mode;
   let c=sOpts.color; gPC=c==='r'?(Math.random()<.5?'w':'b'):c;
-  gDiff=sOpts.diff; gFlip=gPC==='b';
+  gDiff=sOpts.diff; gFlip=(gMode==='bot'&&gPC==='b');
   gB=INIT_BOARD.map(r=>[...r]); gTurn='w'; gSel=null; gLM=[]; gLast=null;
   gCap={w:[],b:[]}; gCR={wK:true,wQ:true,bK:true,bQ:true};
   gEP=null; gHist=[]; gOver=false; pPromo=null;
@@ -1392,8 +1607,7 @@ function finMv(from,to,x,piece,cap,pr){
 
 function mkNota(from,to,piece,cap,pr){
   const F='abcdefgh';
-  if(tp(piece)==='P'){return (cap?F[from[1]]:'')+ F[to[1]]+(8-to[0])+(pr?'='+tp(pr):'');}
-  return tp(piece)+(cap?'x':'')+F[to[1]]+(8-to[0]);
+  return F[to[1]]+(8-to[0])+(pr?'='+tp(pr):'');
 }
 
 function checkEnd(){
@@ -1412,28 +1626,36 @@ function checkEnd(){
     showRes('🏆',winner+' Kazandı!','Şah mat!',gMode==='bot'?(playerWon?`+${gain} ELO kazandın! 🎉`:`ELO değişmedi`):'');
   }else{
     if(gMode==='bot')updStat('draw');
-    playSound('lose');
+    playSound('move');
     showToast('🤝 Berabere!','warn');
     showRes('🤝','Berabere!','Pat pozisyonu.','');
   }
 }
 
 function updStat(res){
-  if(!cu||cu.guest)return;
+  let botNames={easy:'😊 Kolay Bot',medium:'🎯 Orta Bot',hard:'💀 Zor Bot',magnus:'👑 Magnus Carlsen'};
+  let opponent=gMode==='bot'?(botNames[gDiff]||'Bot'):'👥 Yerel Oyuncu';
+  let eloChange=0;
+  if(!cu||cu.guest){
+    saveMatchResult(res, opponent, 0, gHist.length);
+    return;
+  }
   if(res==='win'){
     cu.wins=(cu.wins||0)+1;
-    let g=ELO_GAIN[gDiff]||10; cu.elo=(cu.elo||0)+g;
+    eloChange=ELO_GAIN[gDiff]||10; cu.elo=(cu.elo||0)+eloChange;
     if(gDiff==='easy')cu.ew=(cu.ew||0)+1;
     if(gDiff==='medium')cu.mw=(cu.mw||0)+1;
-    if(gDiff==='hard')cu.hw=(cu.hw||0)+1;
+    if(gDiff==='hard')cu.zw=(cu.zw||0)+1;
     if(gDiff==='magnus')cu.mgw=(cu.mgw||0)+1;
   }else if(res==='loss'){
     cu.losses=(cu.losses||0)+1;
-    // No ELO loss — beginner protection
+    eloChange=0;
   }else{
     cu.draws=(cu.draws||0)+1;
+    eloChange=0;
   }
   users[cu.name]={...cu}; saveUsers(); saveCU();
+  saveMatchResult(res, opponent, eloChange, gHist.length);
 }
 
 function showRes(trophy,title,sub,elo){
@@ -1498,9 +1720,14 @@ function renderG(){
   }
 
   // Active player highlight
-  let topCV = gFlip?gPC:op(gPC);
-  document.getElementById('ban-top').classList.toggle('act', gTurn===topCV);
-  document.getElementById('ban-bot').classList.toggle('act', gTurn!==topCV);
+  if(gMode==='local'){
+    document.getElementById('ban-top').classList.toggle('act', gTurn==='b');
+    document.getElementById('ban-bot').classList.toggle('act', gTurn==='w');
+  } else {
+    let topCV = gFlip?gPC:op(gPC);
+    document.getElementById('ban-top').classList.toggle('act', gTurn===topCV);
+    document.getElementById('ban-bot').classList.toggle('act', gTurn!==topCV);
+  }
 
   renderCap();
 }
@@ -1538,6 +1765,7 @@ function renderMvList(){
 function buildCoords(){
   const F='abcdefgh';
   let rl=document.getElementById('rk-l'),rr=document.getElementById('rk-r'),fr=document.getElementById('fl-row');
+  if(!rl||!rr||!fr)return;
   rl.innerHTML=rr.innerHTML=fr.innerHTML='';
   for(let i=0;i<8;i++){
     let rank=gFlip?i+1:8-i;
@@ -1559,7 +1787,7 @@ function resignGame(){
   if(gOver)return;
   if(confirm('Pes etmek istediğine emin misin?')){
     gOver=true;
-    let winner=gTurn==='w'?'Siyah':'Beyaz';
+    let winner=gMode==='bot'?(gPC==='w'?'Siyah':'Beyaz'):(gTurn==='w'?'Siyah':'Beyaz');
     if(gMode==='bot')updStat('loss');
     showRes('🏳',winner+' Kazandı!','Rakip pes etti.','');
   }
@@ -2192,21 +2420,21 @@ function buildTrCoords(){
 // Format: { title, desc, turn (whose move), board (8x8 array or FEN-like), solution (array of "from-to" strings) }
 const PUZZLES = [
   {
-    title:'Vezir Kurbanı',
-    desc:'Beyaz oynuyor. Şah mat için en iyi hamleyi bul!',
+    title:'İlk Hamle',
+    desc:'Beyaz oynuyor. Merkezi piyonla aç!',
     turn:'w',
     board:[
-      ['bR',null,null,null,'bK',null,null,'bR'],
-      [null,'bP',null,null,null,'bP','bP','bP'],
-      ['bP',null,null,'bP',null,null,null,null],
+      ['bR','bN','bB','bQ','bK','bB','bN','bR'],
+      ['bP','bP','bP','bP','bP','bP','bP','bP'],
       [null,null,null,null,null,null,null,null],
       [null,null,null,null,null,null,null,null],
-      [null,null,null,null,null,null,'wP',null],
-      ['wP','wP','wP',null,null,'wP',null,'wP'],
-      ['wR',null,null,null,'wK',null,null,'wR'],
+      [null,null,null,null,null,null,null,null],
+      [null,null,null,null,null,null,null,null],
+      ['wP','wP','wP','wP','wP','wP','wP','wP'],
+      ['wR','wN','wB','wQ','wK','wB','wN','wR'],
     ],
-    solution:['e2e4'],// placeholder - use simple one-move puzzles
-    hint:'Merkezi kontrol et!'
+    solution:['e2e4'],
+    hint:'Merkezi piyonu iki kare ilerlet!'
   },
   {
     title:'Çatal Hamlesi',
@@ -2444,10 +2672,12 @@ function checkPzMove(from,to){
 }
 
 function showPzHint(){
+  if(!pzPuzzle||!pzPuzzle.solution[pzSolIdx])return;
   let sol=pzPuzzle.solution[pzSolIdx];
   const F='abcdefgh';
-  let hint=`${F[parseInt(sol[1])-1 < 0 ? 0 : sol.charCodeAt(0)-97]}${sol[1]} → ${sol[2]}${sol[3]}`;
-  document.getElementById('pz-hint').textContent='💡 İpucu: '+sol[0]+sol[1]+' → '+sol[2]+sol[3];
+  let from=F[sol.charCodeAt(0)-97]+sol[1];
+  let to=F[sol.charCodeAt(2)-97]+sol[3];
+  document.getElementById('pz-hint').textContent='💡 İpucu: '+from+' → '+to;
 }
 
 function buildPzCoords(){
@@ -2462,7 +2692,243 @@ function buildPzCoords(){
   }
 }
 
-/* Hook sounds into game moves — done inline in finMv above */
+/* ══════════════════════════════════════════════════
+   ONLINE MULTIPLAYER — Firebase Realtime Database
+══════════════════════════════════════════════════ */
+let fbApp=null, fbDb=null, onlineRoomId=null, onlineMyColor=null, onlineListener=null;
+
+// Firebase config - saved by user
+function loadFirebaseConfig(){
+  let saved=localStorage.getItem('ghess_fb_config');
+  if(saved){
+    try{ return JSON.parse(saved); }catch(e){}
+  }
+  return null;
+}
+
+function saveFirebaseConfig(){
+  let raw=document.getElementById('fb-config-input').value.trim();
+  // Accept both JS object and JSON
+  try{
+    // Strip JS object syntax if needed
+    let jsonStr=raw.replace(/(\w+):/g,'"$1":').replace(/'/g,'"');
+    let cfg=JSON.parse(jsonStr);
+    if(!cfg.databaseURL){
+      setOnlineStatus('❌ databaseURL eksik! Firebase config kontrol et.','err');
+      return;
+    }
+    localStorage.setItem('ghess_fb_config', JSON.stringify(cfg));
+    setOnlineStatus('✅ Firebase config kaydedildi!','ok');
+    document.getElementById('fb-warning').style.display='none';
+    initFirebase(cfg);
+  }catch(e){
+    setOnlineStatus('❌ Geçersiz config formatı.','err');
+  }
+}
+
+function initFirebase(cfg){
+  if(typeof firebase==='undefined'){
+    setOnlineStatus('❌ Firebase yüklenemedi. İnternet bağlantısını kontrol et.','err');
+    return false;
+  }
+  try{
+    if(fbApp) fbApp.delete().catch(()=>{});
+    fbApp=firebase.initializeApp(cfg, 'ghess_'+Date.now());
+    fbDb=fbApp.database();
+    return true;
+  }catch(e){
+    setOnlineStatus('❌ Firebase başlatılamadı: '+e.message,'err');
+    return false;
+  }
+}
+
+function ensureFirebase(){
+  if(fbDb) return true;
+  let cfg=loadFirebaseConfig();
+  if(!cfg){
+    setOnlineStatus('⚠️ Önce Firebase config kaydet!','err');
+    return false;
+  }
+  return initFirebase(cfg);
+}
+
+function openOnline(){
+  showSc('sc-online');
+  document.getElementById('online-setup').style.display='block';
+  document.getElementById('online-waiting').style.display='none';
+  setOnlineStatus('','');
+  // Show/hide config warning
+  let cfg=loadFirebaseConfig();
+  document.getElementById('fb-warning').style.display=cfg?'none':'block';
+  if(cfg&&!fbDb) initFirebase(cfg);
+}
+
+function setOnlineStatus(msg, type){
+  let el=document.getElementById('online-status');
+  if(!el)return;
+  el.textContent=msg;
+  el.className='online-status'+(type?' '+type:'');
+}
+
+function genRoomCode(){
+  return Math.random().toString(36).substring(2,8).toUpperCase();
+}
+
+function copyRoomCode(){
+  let code=document.getElementById('room-code-display').textContent;
+  navigator.clipboard.writeText(code).then(()=>showToast('📋 Kod kopyalandı: '+code,'ok')).catch(()=>{});
+}
+
+async function createRoom(){
+  if(!ensureFirebase()) return;
+  setOnlineStatus('Oda oluşturuluyor...','wait');
+  let code=genRoomCode();
+  onlineRoomId=code;
+  onlineMyColor='w';
+  try{
+    await fbDb.ref('rooms/'+code).set({
+      code,
+      white: cu.displayName||cu.name,
+      black: null,
+      status:'waiting',
+      turn:'w',
+      board: JSON.stringify(INIT_BOARD),
+      lastMove: null,
+      created: Date.now()
+    });
+    document.getElementById('online-setup').style.display='none';
+    document.getElementById('online-waiting').style.display='block';
+    document.getElementById('room-code-display').textContent=code;
+    listenRoom(code);
+  }catch(e){
+    setOnlineStatus('❌ Oda oluşturulamadı: '+e.message,'err');
+  }
+}
+
+async function joinRoom(){
+  if(!ensureFirebase()) return;
+  let code=document.getElementById('join-code-input').value.trim().toUpperCase();
+  if(code.length<4){ setOnlineStatus('❌ Geçerli bir oda kodu gir.','err'); return; }
+  setOnlineStatus('Odaya bağlanılıyor...','wait');
+  try{
+    let snap=await fbDb.ref('rooms/'+code).once('value');
+    let room=snap.val();
+    if(!room){ setOnlineStatus('❌ Oda bulunamadı.','err'); return; }
+    if(room.status!=='waiting'){ setOnlineStatus('❌ Oda dolu veya oyun bitti.','err'); return; }
+    onlineRoomId=code;
+    onlineMyColor='b';
+    await fbDb.ref('rooms/'+code).update({
+      black: cu.displayName||cu.name,
+      status:'playing'
+    });
+    setOnlineStatus('✅ Bağlandı! Oyun başlıyor...','ok');
+    setTimeout(()=>startOnlineGame(code,'b',room),800);
+  }catch(e){
+    setOnlineStatus('❌ Bağlanılamadı: '+e.message,'err');
+  }
+}
+
+function listenRoom(code){
+  if(onlineListener) onlineListener();
+  onlineListener=fbDb.ref('rooms/'+code).on('value', snap=>{
+    let room=snap.val();
+    if(!room) return;
+    if(room.status==='playing'&&onlineMyColor==='w'){
+      onlineListener && fbDb.ref('rooms/'+code).off('value',onlineListener);
+      startOnlineGame(code,'w',room);
+    }
+  });
+}
+
+function cancelRoom(){
+  if(onlineRoomId&&fbDb){
+    fbDb.ref('rooms/'+onlineRoomId).remove().catch(()=>{});
+  }
+  onlineRoomId=null; onlineMyColor=null;
+  openOnline();
+}
+
+function leaveOnline(){
+  cancelRoom();
+  showSc('sc-home'); enterHome();
+}
+
+function startOnlineGame(code, myColor, room){
+  // Setup game like startGame but online
+  gMode='online';
+  gPC=myColor;
+  gDiff='easy'; // not used
+  gFlip=(myColor==='b');
+  gB=INIT_BOARD.map(r=>[...r]);
+  gTurn='w'; gSel=null; gLM=[]; gLast=null;
+  gCap={w:[],b:[]}; gCR={wK:true,wQ:true,bK:true,bQ:true};
+  gEP=null; gHist=[]; gOver=false; pPromo=null;
+  applyBoard(selBoard);
+
+  let myName=cu.displayName||cu.name;
+  let oppName=myColor==='w'?(room.black||'Rakip'):(room.white||'Rakip');
+
+  if(myColor==='w'){
+    setBan('bot','w',myName,'ELO: '+(cu.elo||0),true);
+    setBan('top','b',oppName,'ELO: ?');
+  } else {
+    setBan('bot','b',myName,'ELO: '+(cu.elo||0),true);
+    setBan('top','w',oppName,'ELO: ?');
+  }
+  document.getElementById('diff-panel').style.display='block';
+  document.getElementById('diff-name').textContent='🌐 Online';
+  document.getElementById('diff-reward').textContent='Oda: '+code;
+
+  document.getElementById('result-overlay').classList.remove('show');
+  document.getElementById('mv-list').innerHTML='';
+  buildCoords(); showSc('sc-game'); renderG();
+
+  // Listen for opponent moves
+  listenOnlineMoves(code, myColor);
+}
+
+function listenOnlineMoves(code, myColor){
+  fbDb.ref('rooms/'+code+'/lastMove').on('value', snap=>{
+    let mv=snap.val();
+    if(!mv) return;
+    // Only process opponent's moves
+    if(mv.byColor===myColor) return;
+    if(gOver) return;
+    // Apply the move
+    let from=[mv.from[0],mv.from[1]];
+    let to=[mv.to[0],mv.to[1]];
+    let piece=gB[from[0]][from[1]];
+    if(!piece) return;
+    let cap=gB[to[0]][to[1]];
+    let extra={ep:mv.ep||null, cr:mv.cr||null};
+    if(mv.ep) extra.ep=mv.ep;
+    if(mv.cr) extra.cr=mv.cr;
+    finMv(from,to,extra,piece,cap,mv.promo||null);
+  });
+}
+
+// Override finMv for online — send move to Firebase
+const _origFinMvOnline=finMv;
+function finMv(from,to,x,piece,cap,pr){
+  _origFinMvOnline(from,to,x,piece,cap,pr);
+  // If online and it was MY move, send to Firebase
+  if(gMode==='online'&&onlineRoomId&&fbDb){
+    let movedColor=op(gTurn); // gTurn already flipped in finMv
+    if(movedColor===onlineMyColor){
+      fbDb.ref('rooms/'+onlineRoomId+'/lastMove').set({
+        from:[from[0],from[1]],
+        to:[to[0],to[1]],
+        byColor:movedColor,
+        ep:x.ep||null,
+        cr:x.cr||null,
+        promo:pr||null,
+        ts:Date.now()
+      }).catch(()=>{});
+    }
+  }
+}
+
+/* ══ Hook sounds - done inline ══ */
 
 </script>
 
@@ -2534,6 +3000,59 @@ function buildPzCoords(){
         <div class="lesson-card"><h3>Adımlar</h3><div class="lesson-steps" id="tr-steps"></div></div>
         <div class="lesson-card" id="tr-chapters"><h3>Dersler</h3><div class="lesson-nav" id="tr-chapter-nav"></div></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ONLINE SCREEN ══ -->
+<div id="sc-online" class="screen">
+  <div class="topbar">
+    <div class="t-logo">G<span>h</span>ess.co — <span style="color:var(--acc)">🌐 Online</span></div>
+    <div class="t-right">
+      <button class="tbtn safe" onclick="leaveOnline()">⬅ Ana Sayfa</button>
+    </div>
+  </div>
+  <div class="online-body">
+    <!-- Setup panel -->
+    <div class="online-card" id="online-setup">
+      <h2>🌐 Online <em>Oyun</em></h2>
+      <p>Arkadaşınla farklı cihazdan oyna.<br>Oda oluştur veya koda katıl.</p>
+
+      <button class="btn-main" onclick="createRoom()" style="margin-bottom:12px;">
+        🏠 Oda Oluştur
+      </button>
+
+      <div class="online-divider">veya katıl</div>
+
+      <input class="online-input" id="join-code-input" maxlength="6" placeholder="ABC123" oninput="this.value=this.value.toUpperCase()">
+      <button class="btn-main" onclick="joinRoom()" style="background:var(--sf2);color:var(--tx);border:1px solid var(--br);">
+        🔗 Odaya Katıl
+      </button>
+
+      <div class="online-status" id="online-status"></div>
+
+      <div class="firebase-warning" id="fb-warning">
+        ⚠️ Online oyun için <b>Firebase</b> kurulumu gerekli.<br>
+        1. <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> → Proje oluştur<br>
+        2. Realtime Database → Oluştur → Test modu<br>
+        3. Proje ayarları → Web uygulaması → Config'i kopyala<br>
+        4. Aşağıya yapıştır ve kaydet 👇
+      </div>
+      <textarea id="fb-config-input" style="width:100%;margin-top:8px;padding:10px;background:var(--sf2);border:1px solid var(--br);color:var(--tx);font-family:'DM Mono',monospace;font-size:.72rem;border-radius:8px;height:90px;resize:none;outline:none;" placeholder='Buraya Firebase config yapıştır:&#10;{ apiKey: "...", authDomain: "...", databaseURL: "...", ... }'></textarea>
+      <button class="btn-main" onclick="saveFirebaseConfig()" style="margin-top:8px;background:var(--sf2);color:var(--acc);border:1px solid rgba(0,229,160,.3);">💾 Firebase Config Kaydet</button>
+    </div>
+
+    <!-- Waiting panel -->
+    <div class="online-card" id="online-waiting" style="display:none;">
+      <h2>🏠 Oda <em>Hazır</em></h2>
+      <p>Bu kodu arkadaşına gönder:</p>
+      <div class="room-code-display" id="room-code-display" onclick="copyRoomCode()">------</div>
+      <div class="room-code-hint">📋 Kopyalamak için tıkla</div>
+      <div class="online-status wait" id="waiting-status">
+        Arkadaşın bekleniyor
+        <div class="waiting-anim"><span>.</span><span>.</span><span>.</span></div>
+      </div>
+      <button class="btn-main" style="margin-top:20px;background:var(--sf2);color:var(--mu);border:1px solid var(--br);" onclick="cancelRoom()">İptal</button>
     </div>
   </div>
 </div>
