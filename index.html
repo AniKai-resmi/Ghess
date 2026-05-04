@@ -5,9 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ghess.co</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<!-- Gun.js - decentralized realtime, no setup needed -->
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <style>
 /* ──────────────────────────── BOARD THEMES ──────────────────────── */
 :root {
@@ -16,6 +15,7 @@
   --br:#222; --dng:#ff4455;
   --sel-l:#7bc144; --sel-d:#5a9130;
   --lm-l:#cdd66a; --lm-d:#aab840;
+  --sq:68px; /* kare boyutu */
 }
 /* light boards → standard piece colors */
 [data-board="classic"]{ --sl:#f0d9b5;--sd:#b58863;--slh:#f8e4c0;--sdh:#cc9c72; }
@@ -375,8 +375,8 @@ body{
 /* ★★★ THE BOARD — no border-radius on squares ★★★ */
 #board{
   display:grid;
-  grid-template-columns:repeat(8,68px);
-  grid-template-rows:repeat(8,68px);
+  grid-template-columns:repeat(8,var(--sq));
+  grid-template-rows:repeat(8,var(--sq));
   border:2px solid rgba(0,229,160,.5);
   border-radius:0;
   overflow:visible;
@@ -384,7 +384,7 @@ body{
 }
 
 .sq{
-  width:68px;height:68px;
+  width:var(--sq);height:var(--sq);
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;position:relative;
   user-select:none;
@@ -445,8 +445,8 @@ body{
 .sq.capring::before{content:'';position:absolute;inset:4px;border-radius:50%;border:5px solid rgba(0,0,0,.22);z-index:1;pointer-events:none;}
 .sq.l.capring::before{border-color:rgba(0,0,0,.15);}
 
-.fl-row{display:flex;width:544px;justify-content:space-around;margin-top:4px;}
-.fl-row span{width:68px;text-align:center;font-size:.62rem;color:#444;font-family:'DM Mono',monospace;}
+.fl-row{display:flex;width:calc(var(--sq)*8);justify-content:space-around;margin-top:4px;}
+.fl-row span{width:var(--sq);text-align:center;font-size:.62rem;color:#444;font-family:'DM Mono',monospace;}
 
 /* Right panel */
 .right-panel{width:210px;display:flex;flex-direction:column;gap:12px;padding-top:40px;}
@@ -630,6 +630,103 @@ body{
 @keyframes wdot{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-5px);}}
 .firebase-warning{font-size:.72rem;color:var(--mu);font-family:'DM Mono',monospace;margin-top:16px;padding:10px;background:var(--sf2);border-radius:8px;line-height:1.6;text-align:left;}
 .firebase-warning a{color:var(--acc);}
+
+/* ══ MOBİL ══ */
+@media (max-width: 900px){
+  :root{ --sq:52px; }
+  .right-panel{ width:180px; }
+  .pcard{ width:220px; }
+}
+
+@media (max-width: 600px){
+  :root{ --sq:42px; }
+
+  /* Login */
+  .login-card{ width:92vw; padding:28px 20px; }
+  .login-logo h1{ font-size:2.6rem; }
+
+  /* Topbar */
+  .topbar{ padding:10px 14px; flex-wrap:wrap; gap:8px; }
+  .t-right{ gap:7px; }
+  .uname{ font-size:.78rem; }
+  .uelo{ font-size:.62rem; }
+  .tbtn{ padding:5px 10px; font-size:.72rem; }
+
+  /* Home */
+  .home-body{ padding:24px 14px; gap:24px; }
+  .home-hero h2{ font-size:1.6rem; }
+  .play-cards{ gap:10px; }
+  .pcard{ width:calc(50% - 5px); padding:18px 12px; }
+  .pcard-ic{ font-size:2rem; }
+  .pcard h3{ font-size:.9rem; }
+  .pcard p{ font-size:.72rem; }
+  .stats-grid{ gap:8px; }
+  .sb{ padding:12px 14px; min-width:80px; }
+  .sb-val{ font-size:1.5rem; }
+  .sb-lbl{ font-size:.6rem; }
+  .elo-sec{ padding:0 4px; }
+
+  /* Game topbar */
+  .game-topbar{ padding:8px 10px; flex-wrap:wrap; gap:6px; }
+  .g-acts{ gap:5px; flex-wrap:wrap; }
+  .gact{ padding:5px 8px; font-size:.7rem; }
+  .think-pill{ font-size:.7rem; padding:4px 8px; }
+
+  /* Board */
+  .board-shell{ padding:6px; border-radius:6px; }
+  .board-inner{ gap:0; }
+  .rk-col{ width:12px; }
+  .rk-col span{ font-size:.55rem; }
+  .fl-row span{ font-size:.55rem; }
+
+  /* Pieces */
+  .sq .pc{ font-size:calc(var(--sq) * 0.72); }
+
+  /* Player banners */
+  .pban{ padding:7px 10px; gap:7px; }
+  .pav{ width:26px; height:26px; font-size:.75rem; }
+  .pnm{ font-size:.78rem; }
+  .pelo{ font-size:.62rem; }
+
+  /* Right panel — mobilde tahtanın altına */
+  .game-layout{ padding:10px 8px; gap:10px; flex-direction:column; align-items:center; }
+  .right-panel{ width:100%; max-width:calc(var(--sq)*8 + 28px); padding-top:0; flex-direction:row; flex-wrap:wrap; }
+  .rp{ flex:1; min-width:140px; }
+  .mv-list{ max-height:100px; }
+
+  /* Setup modal */
+  .setup-box{ width:95vw; padding:24px 16px; }
+  .setup-box h2{ font-size:1.2rem; }
+
+  /* Puzzle & Trainer */
+  .pz-info,.lesson-info{ width:100%; max-width:calc(var(--sq)*8 + 28px); padding-top:0; }
+
+  /* Streak */
+  .streak-sec{ padding:16px 14px; }
+  .streak-day{ width:38px; }
+  .streak-day .sdc{ width:28px; height:28px; font-size:.85rem; }
+
+  /* Match history */
+  .match-history-sec{ padding:14px 12px; }
+  .mh-item{ gap:10px; padding:8px 10px; }
+
+  /* Online */
+  .online-card{ padding:24px 16px; width:92vw; }
+  .room-code-display{ font-size:2rem; letter-spacing:.2em; }
+
+  /* Profile */
+  .profile-body{ padding:24px 14px; }
+  .profile-avatar{ width:70px; height:70px; font-size:1.8rem; }
+
+  /* Toast */
+  #toast{ font-size:.8rem; padding:9px 16px; top:60px; }
+}
+
+@media (max-width: 380px){
+  :root{ --sq:36px; }
+  .pcard{ width:100%; }
+  .sq .pc{ font-size:calc(var(--sq) * 0.75); }
+}
 
 /* ══ STREAK ══ */
 .streak-sec{width:100%;max-width:520px;background:var(--sf);border:1px solid var(--br);border-radius:16px;padding:22px 24px;}
@@ -1593,10 +1690,20 @@ function finMv(from,to,x,piece,cap,pr){
   if(cap)gCap[op(cl(piece))].push(cap);
   gHist.push({cv:cl(piece),nota:mkNota(from,to,piece,cap,pr)});
   renderMvList();
-  // 🔊 Sound
   if(cap) playSound('capture'); else playSound('move');
-  // 🎯 Pop animation on destination
   setTimeout(()=>popSq(to[0],to[1]),30);
+  // Online: hamleyi karşı tarafa gönder
+  let movedColor=cl(piece);
+  if(gMode==='online'&&onlineRoomId&&gun&&movedColor===onlineMyColor){
+    gun.get('ghess_rooms').get(onlineRoomId).get('lastMove').put({
+      fr:from[0],fc:from[1],tr:to[0],tc:to[1],
+      byColor:movedColor,
+      ep:x.ep?x.ep[0]+','+x.ep[1]:'',
+      cr:x.cr?x.cr.join(','):'',
+      promo:pr||'',
+      ts:Date.now()
+    });
+  }
   gTurn=op(gTurn); gSel=null; gLM=[];
   checkEnd(); renderG();
   if(!gOver&&gMode==='bot'&&gTurn!==gPC){
@@ -2692,242 +2799,222 @@ function buildPzCoords(){
   }
 }
 
+
 /* ══════════════════════════════════════════════════
-   ONLINE MULTIPLAYER — Firebase Realtime Database
+   ONLINE — Gun.js (kurulum yok, direkt çalışır)
 ══════════════════════════════════════════════════ */
-let fbApp=null, fbDb=null, onlineRoomId=null, onlineMyColor=null, onlineListener=null;
+let gun=null;
+let onlineRoomId=null, onlineMyColor=null, gunMoveRef=null;
 
-// Firebase config - saved by user
-function loadFirebaseConfig(){
-  let saved=localStorage.getItem('ghess_fb_config');
-  if(saved){
-    try{ return JSON.parse(saved); }catch(e){}
-  }
-  return null;
-}
-
-function saveFirebaseConfig(){
-  let raw=document.getElementById('fb-config-input').value.trim();
-  // Accept both JS object and JSON
+function initGun(){
+  if(gun) return true;
   try{
-    // Strip JS object syntax if needed
-    let jsonStr=raw.replace(/(\w+):/g,'"$1":').replace(/'/g,'"');
-    let cfg=JSON.parse(jsonStr);
-    if(!cfg.databaseURL){
-      setOnlineStatus('❌ databaseURL eksik! Firebase config kontrol et.','err');
-      return;
-    }
-    localStorage.setItem('ghess_fb_config', JSON.stringify(cfg));
-    setOnlineStatus('✅ Firebase config kaydedildi!','ok');
-    document.getElementById('fb-warning').style.display='none';
-    initFirebase(cfg);
-  }catch(e){
-    setOnlineStatus('❌ Geçersiz config formatı.','err');
-  }
-}
-
-function initFirebase(cfg){
-  if(typeof firebase==='undefined'){
-    setOnlineStatus('❌ Firebase yüklenemedi. İnternet bağlantısını kontrol et.','err');
-    return false;
-  }
-  try{
-    if(fbApp) fbApp.delete().catch(()=>{});
-    fbApp=firebase.initializeApp(cfg, 'ghess_'+Date.now());
-    fbDb=fbApp.database();
+    // Gun.js console mesajını sustur
+    let _log=console.log;
+    console.log=()=>{};
+    gun=Gun(['https://gun-manhattan.herokuapp.com/gun','https://gunjs.herokuapp.com/gun']);
+    console.log=_log;
     return true;
-  }catch(e){
-    setOnlineStatus('❌ Firebase başlatılamadı: '+e.message,'err');
-    return false;
-  }
+  }catch(e){ showToast('Sunucuya bağlanılamadı','err'); return false; }
 }
 
-function ensureFirebase(){
-  if(fbDb) return true;
-  let cfg=loadFirebaseConfig();
-  if(!cfg){
-    setOnlineStatus('⚠️ Önce Firebase config kaydet!','err');
-    return false;
-  }
-  return initFirebase(cfg);
+function showPanel(id){
+  ['online-setup','online-searching','online-waiting','online-join']
+    .forEach(p=>{let el=document.getElementById(p);if(el)el.style.display=p===id?'block':'none';});
 }
 
 function openOnline(){
   showSc('sc-online');
-  document.getElementById('online-setup').style.display='block';
-  document.getElementById('online-waiting').style.display='none';
+  showPanel('online-setup');
   setOnlineStatus('','');
-  // Show/hide config warning
-  let cfg=loadFirebaseConfig();
-  document.getElementById('fb-warning').style.display=cfg?'none':'block';
-  if(cfg&&!fbDb) initFirebase(cfg);
+  initGun();
 }
 
-function setOnlineStatus(msg, type){
-  let el=document.getElementById('online-status');
+function setOnlineStatus(msg,type,elId){
+  let el=document.getElementById(elId||'online-status');
   if(!el)return;
   el.textContent=msg;
   el.className='online-status'+(type?' '+type:'');
 }
 
+function leaveOnline(){
+  cancelSearch(); cancelRoom();
+  showSc('sc-home'); enterHome();
+}
+
+function showCreateRoom(){ showPanel('online-waiting'); createRoom(); }
+function showJoinRoom(){ showPanel('online-join'); }
+
+// Rastgele rakip bul
+function findMatch(){
+  if(!initGun())return;
+  showPanel('online-searching');
+  setOnlineStatus('Rakip aranıyor...','wait','searching-status');
+
+  let myName=cu?cu.displayName||cu.name:'Misafir';
+  let queueNode=gun.get('ghess_queue');
+  let myKey='p_'+Date.now()+'_'+Math.random().toString(36).substr(2,4);
+  let found=false;
+
+  // Bekleyen var mı diye bak
+  queueNode.once(data=>{
+    if(found)return;
+    // Bekleyen oyuncu var mı?
+    let waitingKey=null, waitingData=null;
+    if(data){
+      Object.keys(data).forEach(k=>{
+        if(k==='_')return;
+        let v=data[k];
+        if(v&&v.status==='waiting'&&k!==myKey){
+          waitingKey=k; waitingData=v;
+        }
+      });
+    }
+
+    if(waitingKey&&waitingData){
+      // Rakip bulduk
+      found=true;
+      let roomCode=waitingData.roomCode;
+      queueNode.get(waitingKey).put({status:'matched',blackName:myName});
+      onlineRoomId=roomCode; onlineMyColor='b';
+      setOnlineStatus('Eslesti! Basliyor...','ok','searching-status');
+      // Odaya gir ve dinle
+      setTimeout(()=>{
+        startOnlineGame(roomCode,'b',{white:waitingData.name,black:myName});
+      },800);
+    } else {
+      // Bekle, oda oluştur
+      let roomCode=genRoomCode();
+      onlineRoomId=roomCode; onlineMyColor='w';
+      queueNode.get(myKey).put({name:myName,status:'waiting',roomCode,ts:Date.now()});
+      setOnlineStatus('Rakip bekleniyor...','wait','searching-status');
+
+      // Birisinin "matched" yazmasını bekle
+      queueNode.get(myKey).on(d=>{
+        if(!d||found)return;
+        if(d.status==='matched'){
+          found=true;
+          queueNode.get(myKey).off();
+          queueNode.get(myKey).put(null);
+          setOnlineStatus((d.blackName||'Rakip')+' eslesti!','ok','searching-status');
+          setTimeout(()=>{
+            startOnlineGame(roomCode,'w',{white:myName,black:d.blackName||'Rakip'});
+          },800);
+        }
+      });
+    }
+  });
+}
+
+function cancelSearch(){
+  if(onlineRoomId&&gun) gun.get('ghess_queue').get(onlineRoomId).put(null);
+  onlineRoomId=null; onlineMyColor=null;
+  showPanel('online-setup');
+}
+
+// Özel oda
 function genRoomCode(){
-  return Math.random().toString(36).substring(2,8).toUpperCase();
+  return Math.random().toString(36).substr(2,6).toUpperCase();
+}
+
+function createRoom(){
+  if(!initGun())return;
+  let code=genRoomCode();
+  onlineRoomId=code; onlineMyColor='w';
+  let myName=cu?cu.displayName||cu.name:'Misafir';
+  gun.get('ghess_rooms').get(code).put({white:myName,black:'',status:'waiting',lastMove:''});
+  document.getElementById('room-code-display').textContent=code;
+  // Rakip katılmasını bekle
+  gun.get('ghess_rooms').get(code).on(d=>{
+    if(!d)return;
+    if(d.status==='playing'&&onlineMyColor==='w'){
+      gun.get('ghess_rooms').get(code).off();
+      startOnlineGame(code,'w',{white:myName,black:d.black});
+    }
+  });
+}
+
+function joinRoom(){
+  if(!initGun())return;
+  let code=document.getElementById('join-code-input').value.trim().toUpperCase();
+  if(code.length<4){setOnlineStatus('Gecerli kod gir.','err','join-status');return;}
+  setOnlineStatus('Baglaniliyor...','wait','join-status');
+  let myName=cu?cu.displayName||cu.name:'Misafir';
+  gun.get('ghess_rooms').get(code).once(d=>{
+    if(!d||!d.white){setOnlineStatus('Oda bulunamadi.','err','join-status');return;}
+    if(d.status!=='waiting'){setOnlineStatus('Oda dolu.','err','join-status');return;}
+    gun.get('ghess_rooms').get(code).put({black:myName,status:'playing'});
+    onlineRoomId=code; onlineMyColor='b';
+    setTimeout(()=>startOnlineGame(code,'b',{white:d.white,black:myName}),600);
+  });
 }
 
 function copyRoomCode(){
   let code=document.getElementById('room-code-display').textContent;
-  navigator.clipboard.writeText(code).then(()=>showToast('📋 Kod kopyalandı: '+code,'ok')).catch(()=>{});
-}
-
-async function createRoom(){
-  if(!ensureFirebase()) return;
-  setOnlineStatus('Oda oluşturuluyor...','wait');
-  let code=genRoomCode();
-  onlineRoomId=code;
-  onlineMyColor='w';
-  try{
-    await fbDb.ref('rooms/'+code).set({
-      code,
-      white: cu.displayName||cu.name,
-      black: null,
-      status:'waiting',
-      turn:'w',
-      board: JSON.stringify(INIT_BOARD),
-      lastMove: null,
-      created: Date.now()
-    });
-    document.getElementById('online-setup').style.display='none';
-    document.getElementById('online-waiting').style.display='block';
-    document.getElementById('room-code-display').textContent=code;
-    listenRoom(code);
-  }catch(e){
-    setOnlineStatus('❌ Oda oluşturulamadı: '+e.message,'err');
-  }
-}
-
-async function joinRoom(){
-  if(!ensureFirebase()) return;
-  let code=document.getElementById('join-code-input').value.trim().toUpperCase();
-  if(code.length<4){ setOnlineStatus('❌ Geçerli bir oda kodu gir.','err'); return; }
-  setOnlineStatus('Odaya bağlanılıyor...','wait');
-  try{
-    let snap=await fbDb.ref('rooms/'+code).once('value');
-    let room=snap.val();
-    if(!room){ setOnlineStatus('❌ Oda bulunamadı.','err'); return; }
-    if(room.status!=='waiting'){ setOnlineStatus('❌ Oda dolu veya oyun bitti.','err'); return; }
-    onlineRoomId=code;
-    onlineMyColor='b';
-    await fbDb.ref('rooms/'+code).update({
-      black: cu.displayName||cu.name,
-      status:'playing'
-    });
-    setOnlineStatus('✅ Bağlandı! Oyun başlıyor...','ok');
-    setTimeout(()=>startOnlineGame(code,'b',room),800);
-  }catch(e){
-    setOnlineStatus('❌ Bağlanılamadı: '+e.message,'err');
-  }
-}
-
-function listenRoom(code){
-  if(onlineListener) onlineListener();
-  onlineListener=fbDb.ref('rooms/'+code).on('value', snap=>{
-    let room=snap.val();
-    if(!room) return;
-    if(room.status==='playing'&&onlineMyColor==='w'){
-      onlineListener && fbDb.ref('rooms/'+code).off('value',onlineListener);
-      startOnlineGame(code,'w',room);
-    }
-  });
+  navigator.clipboard.writeText(code).then(()=>showToast('Kod kopyalandi: '+code,'ok')).catch(()=>{});
 }
 
 function cancelRoom(){
-  if(onlineRoomId&&fbDb){
-    fbDb.ref('rooms/'+onlineRoomId).remove().catch(()=>{});
-  }
   onlineRoomId=null; onlineMyColor=null;
-  openOnline();
+  showPanel('online-setup');
 }
 
-function leaveOnline(){
-  cancelRoom();
-  showSc('sc-home'); enterHome();
-}
-
-function startOnlineGame(code, myColor, room){
-  // Setup game like startGame but online
-  gMode='online';
-  gPC=myColor;
-  gDiff='easy'; // not used
-  gFlip=(myColor==='b');
-  gB=INIT_BOARD.map(r=>[...r]);
-  gTurn='w'; gSel=null; gLM=[]; gLast=null;
+// Oyunu başlat
+function startOnlineGame(code,myColor,room){
+  gMode='online'; gPC=myColor;
+  gDiff='easy'; gFlip=(myColor==='b');
+  gB=INIT_BOARD.map(r=>[...r]); gTurn='w'; gSel=null; gLM=[]; gLast=null;
   gCap={w:[],b:[]}; gCR={wK:true,wQ:true,bK:true,bQ:true};
   gEP=null; gHist=[]; gOver=false; pPromo=null;
   applyBoard(selBoard);
-
-  let myName=cu.displayName||cu.name;
+  let myName=cu?cu.displayName||cu.name:'Misafir';
   let oppName=myColor==='w'?(room.black||'Rakip'):(room.white||'Rakip');
-
   if(myColor==='w'){
-    setBan('bot','w',myName,'ELO: '+(cu.elo||0),true);
+    setBan('bot','w',myName,'ELO: '+(cu?cu.elo||0:0),true);
     setBan('top','b',oppName,'ELO: ?');
-  } else {
-    setBan('bot','b',myName,'ELO: '+(cu.elo||0),true);
+  }else{
+    setBan('bot','b',myName,'ELO: '+(cu?cu.elo||0:0),true);
     setBan('top','w',oppName,'ELO: ?');
   }
   document.getElementById('diff-panel').style.display='block';
-  document.getElementById('diff-name').textContent='🌐 Online';
+  document.getElementById('diff-name').textContent='Online';
   document.getElementById('diff-reward').textContent='Oda: '+code;
-
   document.getElementById('result-overlay').classList.remove('show');
   document.getElementById('mv-list').innerHTML='';
   buildCoords(); showSc('sc-game'); renderG();
 
-  // Listen for opponent moves
-  listenOnlineMoves(code, myColor);
-}
-
-function listenOnlineMoves(code, myColor){
-  fbDb.ref('rooms/'+code+'/lastMove').on('value', snap=>{
-    let mv=snap.val();
-    if(!mv) return;
-    // Only process opponent's moves
-    if(mv.byColor===myColor) return;
-    if(gOver) return;
-    // Apply the move
-    let from=[mv.from[0],mv.from[1]];
-    let to=[mv.to[0],mv.to[1]];
-    let piece=gB[from[0]][from[1]];
-    if(!piece) return;
-    let cap=gB[to[0]][to[1]];
-    let extra={ep:mv.ep||null, cr:mv.cr||null};
-    if(mv.ep) extra.ep=mv.ep;
-    if(mv.cr) extra.cr=mv.cr;
-    finMv(from,to,extra,piece,cap,mv.promo||null);
+  // Rakibin hamlelerini dinle
+  gunMoveRef=gun.get('ghess_rooms').get(code).get('lastMove');
+  gunMoveRef.on(mv=>{
+    if(!mv||!mv.byColor||mv.byColor===myColor||gOver)return;
+    let from=[mv.fr,mv.fc], to=[mv.tr,mv.tc];
+    let piece=gB[from[0]]&&gB[from[0]][from[1]]; if(!piece)return;
+    let cap=gB[to[0]]&&gB[to[0]][to[1]];
+    finMv(from,to,{ep:mv.ep||null,cr:mv.cr||null},piece,cap,mv.promo||null);
   });
 }
 
-// Override finMv for online — send move to Firebase
-const _origFinMvOnline=finMv;
+// Hamleyi karşı tarafa gönder
+const _baseFinMv=finMv;
 function finMv(from,to,x,piece,cap,pr){
-  _origFinMvOnline(from,to,x,piece,cap,pr);
-  // If online and it was MY move, send to Firebase
-  if(gMode==='online'&&onlineRoomId&&fbDb){
-    let movedColor=op(gTurn); // gTurn already flipped in finMv
+  _baseFinMv(from,to,x,piece,cap,pr);
+  if(gMode==='online'&&onlineRoomId&&gun&&gunMoveRef){
+    let movedColor=op(gTurn);
     if(movedColor===onlineMyColor){
-      fbDb.ref('rooms/'+onlineRoomId+'/lastMove').set({
-        from:[from[0],from[1]],
-        to:[to[0],to[1]],
+      gun.get('ghess_rooms').get(onlineRoomId).get('lastMove').put({
+        fr:from[0],fc:from[1],tr:to[0],tc:to[1],
         byColor:movedColor,
-        ep:x.ep||null,
-        cr:x.cr||null,
-        promo:pr||null,
+        ep:x.ep?JSON.stringify(x.ep):'',
+        cr:x.cr?JSON.stringify(x.cr):'',
+        promo:pr||'',
         ts:Date.now()
-      }).catch(()=>{});
+      });
     }
   }
 }
 
+// Saat ve config (eski Firebase kodlarından geriye kalan, boş kalabilir)
+function saveFirebaseConfig(){}
 /* ══ Hook sounds - done inline ══ */
 
 </script>
@@ -3013,36 +3100,48 @@ function finMv(from,to,x,piece,cap,pr){
     </div>
   </div>
   <div class="online-body">
-    <!-- Setup panel -->
+
+    <!-- Ana panel -->
     <div class="online-card" id="online-setup">
       <h2>🌐 Online <em>Oyun</em></h2>
-      <p>Arkadaşınla farklı cihazdan oyna.<br>Oda oluştur veya koda katıl.</p>
+      <p>Rastgele bir rakiple eşleş veya arkadaşınla oyna.</p>
 
-      <button class="btn-main" onclick="createRoom()" style="margin-bottom:12px;">
-        🏠 Oda Oluştur
+      <button class="btn-main" onclick="findMatch()" style="margin-bottom:10px;font-size:1.05rem;padding:15px;">
+        🎲 Rastgele Rakip Bul
       </button>
-
-      <div class="online-divider">veya katıl</div>
-
-      <input class="online-input" id="join-code-input" maxlength="6" placeholder="ABC123" oninput="this.value=this.value.toUpperCase()">
-      <button class="btn-main" onclick="joinRoom()" style="background:var(--sf2);color:var(--tx);border:1px solid var(--br);">
-        🔗 Odaya Katıl
+      <button class="btn-main" onclick="showCreateRoom()" style="background:var(--sf2);color:var(--tx);border:1px solid var(--br);margin-bottom:10px;">
+        🏠 Oda Oluştur (Arkadaşla)
+      </button>
+      <button class="btn-main" onclick="showJoinRoom()" style="background:var(--sf2);color:var(--tx);border:1px solid var(--br);">
+        🔗 Odaya Katıl (Kod ile)
       </button>
 
       <div class="online-status" id="online-status"></div>
 
-      <div class="firebase-warning" id="fb-warning">
-        ⚠️ Online oyun için <b>Firebase</b> kurulumu gerekli.<br>
-        1. <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> → Proje oluştur<br>
-        2. Realtime Database → Oluştur → Test modu<br>
-        3. Proje ayarları → Web uygulaması → Config'i kopyala<br>
-        4. Aşağıya yapıştır ve kaydet 👇
-      </div>
-      <textarea id="fb-config-input" style="width:100%;margin-top:8px;padding:10px;background:var(--sf2);border:1px solid var(--br);color:var(--tx);font-family:'DM Mono',monospace;font-size:.72rem;border-radius:8px;height:90px;resize:none;outline:none;" placeholder='Buraya Firebase config yapıştır:&#10;{ apiKey: "...", authDomain: "...", databaseURL: "...", ... }'></textarea>
-      <button class="btn-main" onclick="saveFirebaseConfig()" style="margin-top:8px;background:var(--sf2);color:var(--acc);border:1px solid rgba(0,229,160,.3);">💾 Firebase Config Kaydet</button>
+      <!-- Firebase config (gizli, sadece admin için) -->
+      <details style="margin-top:20px;">
+        <summary style="font-size:.72rem;color:var(--mu);cursor:pointer;font-family:'DM Mono',monospace;">⚙️ Sunucu Ayarları (Site Sahibi)</summary>
+        <div style="margin-top:10px;">
+          <textarea id="fb-config-input" style="width:100%;padding:10px;background:var(--sf2);border:1px solid var(--br);color:var(--tx);font-family:'DM Mono',monospace;font-size:.7rem;border-radius:8px;height:80px;resize:none;outline:none;" placeholder='Firebase config yapıştır: { apiKey:"...", databaseURL:"...", ... }'></textarea>
+          <button class="btn-main" onclick="saveFirebaseConfig()" style="margin-top:6px;background:var(--sf2);color:var(--acc);border:1px solid rgba(0,229,160,.3);font-size:.82rem;padding:9px;">💾 Kaydet</button>
+        </div>
+      </details>
     </div>
 
-    <!-- Waiting panel -->
+    <!-- Arama ekranı -->
+    <div class="online-card" id="online-searching" style="display:none;">
+      <h2>🔍 Rakip <em>Aranıyor</em></h2>
+      <p>Sana uygun bir rakip bekleniyor…</p>
+      <div style="font-size:4rem;margin:20px 0;">
+        <span style="animation:wdot 1.4s infinite 0s;display:inline-block;">♟</span>
+        <span style="animation:wdot 1.4s infinite .3s;display:inline-block;">♟</span>
+        <span style="animation:wdot 1.4s infinite .6s;display:inline-block;">♟</span>
+      </div>
+      <div class="online-status wait" id="searching-status">Eşleşme bekleniyor…</div>
+      <button class="btn-main" onclick="cancelSearch()" style="margin-top:20px;background:var(--sf2);color:var(--mu);border:1px solid var(--br);">İptal</button>
+    </div>
+
+    <!-- Oda bekleme ekranı -->
     <div class="online-card" id="online-waiting" style="display:none;">
       <h2>🏠 Oda <em>Hazır</em></h2>
       <p>Bu kodu arkadaşına gönder:</p>
@@ -3050,10 +3149,21 @@ function finMv(from,to,x,piece,cap,pr){
       <div class="room-code-hint">📋 Kopyalamak için tıkla</div>
       <div class="online-status wait" id="waiting-status">
         Arkadaşın bekleniyor
-        <div class="waiting-anim"><span>.</span><span>.</span><span>.</span></div>
+        <span class="waiting-anim"><span>.</span><span>.</span><span>.</span></span>
       </div>
       <button class="btn-main" style="margin-top:20px;background:var(--sf2);color:var(--mu);border:1px solid var(--br);" onclick="cancelRoom()">İptal</button>
     </div>
+
+    <!-- Kod girme ekranı -->
+    <div class="online-card" id="online-join" style="display:none;">
+      <h2>🔗 Odaya <em>Katıl</em></h2>
+      <p>Arkadaşının sana verdiği kodu gir:</p>
+      <input class="online-input" id="join-code-input" maxlength="6" placeholder="ABC123" oninput="this.value=this.value.toUpperCase()">
+      <button class="btn-main" onclick="joinRoom()">Katıl →</button>
+      <button class="btn-main" onclick="showPanel('online-setup')" style="margin-top:8px;background:var(--sf2);color:var(--mu);border:1px solid var(--br);">← Geri</button>
+      <div class="online-status" id="join-status"></div>
+    </div>
+
   </div>
 </div>
 
