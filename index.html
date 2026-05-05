@@ -728,6 +728,36 @@ body{
   .sq .pc{ font-size:calc(var(--sq) * 0.75); }
 }
 
+/* ══ ADMIN ══ */
+#sc-admin{flex-direction:column;}
+.admin-body{flex:1;padding:28px;display:flex;flex-direction:column;gap:20px;max-width:900px;margin:0 auto;width:100%;}
+.admin-section{background:var(--sf);border:1px solid var(--br);border-radius:14px;padding:20px;}
+.admin-section h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.16em;color:var(--acc);font-family:'DM Mono',monospace;margin-bottom:14px;border-bottom:1px solid var(--br);padding-bottom:8px;}
+.admin-stats{display:flex;gap:12px;flex-wrap:wrap;}
+.admin-stat{background:var(--sf2);border:1px solid var(--br);border-radius:10px;padding:14px 20px;text-align:center;min-width:100px;}
+.admin-stat .av{font-size:1.6rem;font-weight:800;color:var(--acc);font-family:'DM Mono',monospace;}
+.admin-stat .al{font-size:.68rem;color:var(--mu);text-transform:uppercase;letter-spacing:.12em;margin-top:2px;}
+.user-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+.user-table th{text-align:left;padding:8px 10px;color:var(--mu);font-family:'DM Mono',monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid var(--br);}
+.user-table td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+.user-table tr:hover td{background:var(--sf2);}
+.utag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:700;}
+.utag.admin{background:rgba(240,192,64,.15);color:#f0c040;border:1px solid rgba(240,192,64,.3);}
+.utag.guest{background:var(--sf2);color:var(--mu);border:1px solid var(--br);}
+.admin-btn{padding:5px 12px;border-radius:6px;cursor:pointer;font-family:'Syne',sans-serif;font-size:.75rem;font-weight:700;border:1px solid var(--br);background:var(--sf2);color:var(--mu);transition:all .15s;}
+.admin-btn:hover{border-color:var(--dng);color:var(--dng);}
+.admin-btn.safe:hover{border-color:var(--acc);color:var(--acc);}
+
+/* Admin giriş */
+#admin-login-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:400;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+#admin-login-overlay.show{display:flex;}
+.admin-login-box{background:var(--sf);border:1px solid var(--br);border-radius:16px;padding:36px 32px;width:360px;text-align:center;}
+.admin-login-box h2{font-size:1.3rem;font-weight:800;margin-bottom:6px;}
+.admin-login-box p{color:var(--mu);font-size:.82rem;margin-bottom:20px;font-family:'DM Mono',monospace;}
+.admin-login-box input{width:100%;padding:12px;background:var(--sf2);border:1px solid var(--br);color:var(--tx);font-family:'DM Mono',monospace;font-size:1rem;border-radius:9px;outline:none;text-align:center;letter-spacing:.1em;transition:border .18s;margin-bottom:10px;}
+.admin-login-box input:focus{border-color:var(--acc);}
+.admin-err{color:var(--dng);font-size:.78rem;font-family:'DM Mono',monospace;margin-bottom:8px;min-height:18px;}
+
 /* ══ STREAK ══ */
 .streak-sec{width:100%;max-width:520px;background:var(--sf);border:1px solid var(--br);border-radius:16px;padding:22px 24px;}
 .streak-header{display:flex;justify-content:space-between;align-items:center;font-size:.9rem;font-weight:700;margin-bottom:16px;}
@@ -819,6 +849,7 @@ body{
         </div>
       </div>
       <button class="tbtn safe" onclick="openProfile()">✏️ Profil</button>
+      <button class="tbtn safe" id="admin-topbar-btn" style="display:none;border-color:rgba(240,192,64,.4);color:#f0c040;" onclick="openAdmin()">👑 Admin</button>
       <button class="tbtn" onclick="doLogout()">Çıkış</button>
     </div>
   </div>
@@ -1372,6 +1403,9 @@ function enterHome(){
   buildSwatches();
   renderStreak();
   renderMatchHistory();
+  // Admin butonu — sadece admin kullanıcısına göster
+  let adminBtn=document.getElementById('admin-topbar-btn');
+  if(adminBtn) adminBtn.style.display=(cu&&cu.name===ADMIN_USERNAME)?'block':'none';
   showSc('sc-home');
 }
 
@@ -2809,10 +2843,12 @@ let onlineRoomId=null, onlineMyColor=null, gunMoveRef=null;
 function initGun(){
   if(gun) return true;
   try{
-    // Gun.js console mesajını sustur
-    let _log=console.log;
-    console.log=()=>{};
-    gun=Gun(['https://gun-manhattan.herokuapp.com/gun','https://gunjs.herokuapp.com/gun']);
+    let _log=console.log; console.log=()=>{};
+    gun=Gun([
+      'https://gun-us.herokuapp.com/gun',
+      'https://gundb-relay-mlccl.ondigitalocean.app/gun',
+      'wss://gun-us.herokuapp.com/gun'
+    ]);
     console.log=_log;
     return true;
   }catch(e){ showToast('Sunucuya bağlanılamadı','err'); return false; }
@@ -2852,62 +2888,69 @@ function findMatch(){
   setOnlineStatus('Rakip aranıyor...','wait','searching-status');
 
   let myName=cu?cu.displayName||cu.name:'Misafir';
-  let queueNode=gun.get('ghess_queue');
   let myKey='p_'+Date.now()+'_'+Math.random().toString(36).substr(2,4);
   let found=false;
+  let myRoomCode=genRoomCode();
 
-  // Bekleyen var mı diye bak
-  queueNode.once(data=>{
-    if(found)return;
-    // Bekleyen oyuncu var mı?
-    let waitingKey=null, waitingData=null;
-    if(data){
-      Object.keys(data).forEach(k=>{
-        if(k==='_')return;
-        let v=data[k];
-        if(v&&v.status==='waiting'&&k!==myKey){
-          waitingKey=k; waitingData=v;
-        }
-      });
-    }
+  // Önce kendimi kuyruğa ekle
+  gun.get('ghess_queue').get(myKey).put({
+    name:myName, status:'waiting', roomCode:myRoomCode, ts:Date.now()
+  });
 
-    if(waitingKey&&waitingData){
-      // Rakip bulduk
+  // Rakip beni matched yaptıysa dinle
+  gun.get('ghess_queue').get(myKey).on(function(d){
+    if(!d||found)return;
+    if(d.status==='matched'){
       found=true;
-      let roomCode=waitingData.roomCode;
-      queueNode.get(waitingKey).put({status:'matched',blackName:myName});
-      onlineRoomId=roomCode; onlineMyColor='b';
-      setOnlineStatus('Eslesti! Basliyor...','ok','searching-status');
-      // Odaya gir ve dinle
-      setTimeout(()=>{
-        startOnlineGame(roomCode,'b',{white:waitingData.name,black:myName});
-      },800);
-    } else {
-      // Bekle, oda oluştur
-      let roomCode=genRoomCode();
-      onlineRoomId=roomCode; onlineMyColor='w';
-      queueNode.get(myKey).put({name:myName,status:'waiting',roomCode,ts:Date.now()});
-      setOnlineStatus('Rakip bekleniyor...','wait','searching-status');
-
-      // Birisinin "matched" yazmasını bekle
-      queueNode.get(myKey).on(d=>{
-        if(!d||found)return;
-        if(d.status==='matched'){
-          found=true;
-          queueNode.get(myKey).off();
-          queueNode.get(myKey).put(null);
-          setOnlineStatus((d.blackName||'Rakip')+' eslesti!','ok','searching-status');
-          setTimeout(()=>{
-            startOnlineGame(roomCode,'w',{white:myName,black:d.blackName||'Rakip'});
-          },800);
-        }
-      });
+      gun.get('ghess_queue').get(myKey).off();
+      gun.get('ghess_queue').get(myKey).put(null);
+      onlineRoomId=myRoomCode; onlineMyColor='w';
+      setOnlineStatus((d.blackName||'Rakip')+' eşleşti!','ok','searching-status');
+      setTimeout(()=>startOnlineGame(myRoomCode,'w',{white:myName,black:d.blackName||'Rakip'}),800);
     }
   });
+
+  // Bekleyen biri var mı? 1.5 saniye sonra bak (Gun sync için süre ver)
+  setTimeout(()=>{
+    if(found)return;
+    gun.get('ghess_queue').once(function(data){
+      if(found)return;
+      let waitingKey=null, waitingData=null;
+      if(data){
+        Object.keys(data).forEach(k=>{
+          if(k==='_'||k===myKey)return;
+          let v=data[k];
+          if(v&&typeof v==='object'&&v.status==='waiting'&&v.roomCode&&v.name){
+            // En eski bekleyeni al
+            if(!waitingKey||v.ts<waitingData.ts){ waitingKey=k; waitingData=v; }
+          }
+        });
+      }
+      if(waitingKey&&waitingData&&!found){
+        found=true;
+        gun.get('ghess_queue').get(myKey).off();
+        gun.get('ghess_queue').get(myKey).put(null);
+        // Rakibi matched olarak işaretle
+        gun.get('ghess_queue').get(waitingKey).put({status:'matched',blackName:myName});
+        onlineRoomId=waitingData.roomCode; onlineMyColor='b';
+        setOnlineStatus(waitingData.name+' ile eşleşildi!','ok','searching-status');
+        setTimeout(()=>startOnlineGame(waitingData.roomCode,'b',{white:waitingData.name,black:myName}),800);
+      }
+    });
+  },1500);
+
+  // 30 saniye timeout
+  setTimeout(()=>{
+    if(!found){
+      setOnlineStatus('Rakip bulunamadı, tekrar dene.','err','searching-status');
+      gun.get('ghess_queue').get(myKey).put(null);
+      setTimeout(()=>showPanel('online-setup'),2000);
+    }
+  },30000);
 }
 
 function cancelSearch(){
-  if(onlineRoomId&&gun) gun.get('ghess_queue').get(onlineRoomId).put(null);
+  if(gun) gun.get('ghess_queue').map().once(()=>{});
   onlineRoomId=null; onlineMyColor=null;
   showPanel('online-setup');
 }
@@ -2994,27 +3037,112 @@ function startOnlineGame(code,myColor,room){
   });
 }
 
-// Hamleyi karşı tarafa gönder
-const _baseFinMv=finMv;
-function finMv(from,to,x,piece,cap,pr){
-  _baseFinMv(from,to,x,piece,cap,pr);
-  if(gMode==='online'&&onlineRoomId&&gun&&gunMoveRef){
-    let movedColor=op(gTurn);
-    if(movedColor===onlineMyColor){
-      gun.get('ghess_rooms').get(onlineRoomId).get('lastMove').put({
-        fr:from[0],fc:from[1],tr:to[0],tc:to[1],
-        byColor:movedColor,
-        ep:x.ep?JSON.stringify(x.ep):'',
-        cr:x.cr?JSON.stringify(x.cr):'',
-        promo:pr||'',
-        ts:Date.now()
-      });
-    }
+/* ══════════════════════════════════════════════════
+   ADMIN PANELİ
+══════════════════════════════════════════════════ */
+// ⚠️ Bu şifreyi değiştir!
+const ADMIN_PASS = 'ghess2024admin';
+// Admin kullanıcı adı — sadece bu kullanıcı admin butonunu görür
+const ADMIN_USERNAME = 'admin';
+
+let adminUnlocked = false;
+
+function openAdminLogin(){
+  document.getElementById('admin-pass-input').value='';
+  document.getElementById('admin-err').textContent='';
+  document.getElementById('admin-login-overlay').classList.add('show');
+  setTimeout(()=>document.getElementById('admin-pass-input').focus(),200);
+}
+
+function closeAdminLogin(){
+  document.getElementById('admin-login-overlay').classList.remove('show');
+}
+
+function checkAdminPass(){
+  let pass=document.getElementById('admin-pass-input').value;
+  if(pass===ADMIN_PASS){
+    adminUnlocked=true;
+    closeAdminLogin();
+    openAdmin();
+  } else {
+    document.getElementById('admin-err').textContent='❌ Yanlış şifre.';
+    document.getElementById('admin-pass-input').value='';
   }
 }
 
-// Saat ve config (eski Firebase kodlarından geriye kalan, boş kalabilir)
-function saveFirebaseConfig(){}
+function openAdmin(){
+  if(!adminUnlocked){ openAdminLogin(); return; }
+  renderAdminPanel();
+  showSc('sc-admin');
+}
+
+function renderAdminPanel(){
+  // İstatistikler
+  let allUsers=Object.values(users);
+  let totalUsers=allUsers.length;
+  let totalGames=allUsers.reduce((s,u)=>(s+(u.wins||0)+(u.losses||0)+(u.draws||0)),0);
+  let totalElo=allUsers.reduce((s,u)=>s+(u.elo||0),0);
+  let avgElo=totalUsers?Math.round(totalElo/totalUsers):0;
+  let topUser=allUsers.sort((a,b)=>(b.elo||0)-(a.elo||0))[0];
+
+  let statsEl=document.getElementById('admin-stats');
+  statsEl.innerHTML=`
+    <div class="admin-stat"><div class="av">${totalUsers}</div><div class="al">Kayıtlı Oyuncu</div></div>
+    <div class="admin-stat"><div class="av">${totalGames}</div><div class="al">Toplam Maç</div></div>
+    <div class="admin-stat"><div class="av">${avgElo}</div><div class="al">Ort. ELO</div></div>
+    <div class="admin-stat"><div class="av" style="font-size:1rem;">${topUser?topUser.displayName||'—':'—'}</div><div class="al">En Yüksek ELO (${topUser?topUser.elo||0:0})</div></div>
+  `;
+
+  // Kullanıcı tablosu
+  let tbody=document.getElementById('admin-user-tbody');
+  tbody.innerHTML='';
+  let sorted=Object.entries(users).sort((a,b)=>(b[1].elo||0)-(a[1].elo||0));
+  sorted.forEach(([uname,udata])=>{
+    let isAdmin=(uname===ADMIN_USERNAME);
+    let tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>
+        <strong>${udata.displayName||uname}</strong>
+        <small style="color:var(--mu);display:block;font-family:'DM Mono',monospace;font-size:.68rem;">${uname}</small>
+        ${isAdmin?'<span class="utag admin">Admin</span>':''}
+      </td>
+      <td style="color:var(--acc);font-family:'DM Mono',monospace;font-weight:700;">${udata.elo||0}</td>
+      <td style="font-family:'DM Mono',monospace;">${udata.wins||0}/${udata.losses||0}/${udata.draws||0}</td>
+      <td style="font-family:'DM Mono',monospace;">${udata.ew||0}</td>
+      <td style="font-family:'DM Mono',monospace;">${udata.mw||0}</td>
+      <td style="font-family:'DM Mono',monospace;">${udata.zw||0}</td>
+      <td style="font-family:'DM Mono',monospace;">${udata.mgw||0}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="admin-btn safe" onclick="adminResetElo('${uname}')">ELO Sıfırla</button>
+        ${!isAdmin?`<button class="admin-btn" onclick="adminDeleteUser('${uname}')">Sil</button>`:''}
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function adminResetElo(uname){
+  if(!confirm(uname+' kullanıcısının ELO\'sunu sıfırlamak istediğine emin misin?')) return;
+  if(users[uname]){
+    users[uname].elo=0;
+    users[uname].wins=0; users[uname].losses=0; users[uname].draws=0;
+    users[uname].ew=0; users[uname].mw=0; users[uname].zw=0; users[uname].mgw=0;
+    saveUsers();
+    if(cu&&cu.name===uname){ cu={...cu,...users[uname]}; saveCU(); }
+    showToast(uname+' ELO sıfırlandı','ok');
+    renderAdminPanel();
+  }
+}
+
+function adminDeleteUser(uname){
+  if(uname===ADMIN_USERNAME){ showToast('Admin silinemez!','err'); return; }
+  if(!confirm(uname+' kullanıcısını silmek istediğine emin misin?')) return;
+  delete users[uname];
+  saveUsers();
+  showToast(uname+' silindi','ok');
+  renderAdminPanel();
+}
+
 /* ══ Hook sounds - done inline ══ */
 
 </script>
@@ -3162,6 +3290,60 @@ function saveFirebaseConfig(){}
       <button class="btn-main" onclick="joinRoom()">Katıl →</button>
       <button class="btn-main" onclick="showPanel('online-setup')" style="margin-top:8px;background:var(--sf2);color:var(--mu);border:1px solid var(--br);">← Geri</button>
       <div class="online-status" id="join-status"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ ADMIN GİRİŞ ══ -->
+<div id="admin-login-overlay">
+  <div class="admin-login-box">
+    <h2>🔐 Admin Paneli</h2>
+    <p>Sadece site sahibi girebilir</p>
+    <input type="password" id="admin-pass-input" placeholder="Şifre" onkeydown="if(event.key==='Enter')checkAdminPass()">
+    <div class="admin-err" id="admin-err"></div>
+    <button class="btn-main" onclick="checkAdminPass()">Giriş →</button>
+    <button class="btn-main" style="margin-top:8px;background:var(--sf2);color:var(--mu);border:1px solid var(--br);" onclick="closeAdminLogin()">İptal</button>
+  </div>
+</div>
+
+<!-- ══ ADMIN PANEL ══ -->
+<div id="sc-admin" class="screen">
+  <div class="topbar">
+    <div class="t-logo">G<span>h</span>ess.co — <span style="color:#f0c040">👑 Admin</span></div>
+    <div class="t-right">
+      <button class="tbtn safe" onclick="showSc('sc-home');enterHome()">⬅ Ana Sayfa</button>
+      <button class="tbtn" onclick="doLogout()">Çıkış</button>
+    </div>
+  </div>
+  <div class="admin-body">
+
+    <!-- Site istatistikleri -->
+    <div class="admin-section">
+      <h3>📊 Site İstatistikleri</h3>
+      <div class="admin-stats" id="admin-stats"></div>
+    </div>
+
+    <!-- Kullanıcı listesi -->
+    <div class="admin-section">
+      <h3>👥 Tüm Kullanıcılar</h3>
+      <div style="overflow-x:auto;">
+        <table class="user-table" id="admin-user-table">
+          <thead>
+            <tr>
+              <th>Kullanıcı</th>
+              <th>ELO</th>
+              <th>G/M/B</th>
+              <th>Kolay</th>
+              <th>Orta</th>
+              <th>Zor</th>
+              <th>Magnus</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
+          <tbody id="admin-user-tbody"></tbody>
+        </table>
+      </div>
     </div>
 
   </div>
